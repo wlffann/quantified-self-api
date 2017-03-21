@@ -1,0 +1,23 @@
+{
+  "name": "quantified-self-api",
+  "version": "1.0.0",
+  "description": "REST API for a simple calorie tracker",
+  "main": "server.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "keywords": [
+    "express"
+  ],
+  "author": "Annie Wolff",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.15.2"
+  },
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "mocha": "^3.2.0",
+    "pryjs": "^1.0.3",
+    "request": "^2.81.0"
+  }
+}

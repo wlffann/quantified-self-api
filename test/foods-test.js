@@ -16,10 +16,10 @@ describe('API', () => {
     })
     
     app.locals.foods = {
-      1: {'name': 'banana',
-          'calories': '105'},
-      2: {'name': 'carrot',
-          'calories': '25'}
+      1490139646988: {'name': 'banana',
+                      'calories': '105'},
+      1490139561457: {'name': 'carrot',
+                      'calories': '25'}
     };
   });
 
@@ -36,9 +36,9 @@ describe('API', () => {
 
   describe('GET /foods/:id', () => {
     it('returns a successful status code if record found', (done) => {
-      this.request.get('/foods/1', (error, response) => {
+      this.request.get('/foods/1490139646988', (error, response) => {
         if (error) { done(error) };
-        assert.equal(response.statusCode, 201);
+        assert.equal(response.statusCode, 200);
         done();
       });
     });
@@ -52,9 +52,9 @@ describe('API', () => {
     });
 
     it('returns a particular food', (done) => {
-      this.request.get('/foods/1', (error, response) => {
+      this.request.get('/foods/1490139646988', (error, response) => {
         if (error) { done(error) };
-        var expectedFood = app.locals.foods[1]
+        var expectedFood = app.locals.foods['1490139646988']
         var foundFood = JSON.parse(response.body)['food'];
         assert.equal(foundFood.name, expectedFood.name);
         assert.equal(foundFood.calories, expectedFood.calories);
@@ -83,6 +83,58 @@ describe('API', () => {
   });
 
   describe('POST /foods', () => {
-  
+    beforeEach(() => {
+      app.locals.foods = {};
+    });
+    
+    it('recieves and stores data', (done) => {
+      var food = {'food': {'name': 'banana', 'calories': '105'}}
+      this.request.post('/foods', { form: food }, (error, response) => {
+        if (error) { done(error) };
+        var foodsCount = Object.keys(app.locals.foods).length;
+        assert.equal(foodsCount, 1);
+        done();
+      });
+    });
+  });
+
+  describe('PATCH /foods/:id', () => {
+    beforeEach(() => {
+      app.locals.foods = {
+        1490139646988: {'name': 'banana',
+                        'calories': '105'},
+        1490139561457: {'name': 'carrot',
+                        'calories': '25'}
+      };
+    }); 
+    
+    it('can update an exsisting record', (done) => {
+      var food = {'food': {'name': 'apple', 'calories': '105'}}
+      this.request.patch('/foods/1490139646988', { form: food }, (error, response) => {
+        if (error) { done(error) } 
+        var food =  app.locals.foods[1490139646988];
+        assert.equal(food.name, 'apple');
+        done();
+      });
+    });  
+  });
+
+  describe('DELETE /foods/:id', () => {
+    beforeEach(() => {
+      app.locals.foods = {
+        1490139646988: {'name': 'banana',
+                        'calories': '105'},
+        1490139561457: {'name': 'carrot',
+                        'calories': '25'}
+      };
+    }); 
+    
+    it('removes a specific record', (done) => {
+      this.request.delete('/foods/1490139561457', (error, response) => {
+        if (error) { done(error) }
+        assert.equal(Object.keys(app.locals.foods).length, 1);
+        done();
+      });
+    });
   });
 });

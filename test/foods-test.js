@@ -1,6 +1,9 @@
 const app = require('../server.js');
 const assert = require('chai').assert;
 const request = require('request');
+const environment = process.env.NODE_ENV || 'development';
+const configuration = require('../knexfile')[environment];
+const database = require('knex')(configuration);
 
 describe('API', () => {
   
@@ -15,12 +18,6 @@ describe('API', () => {
       baseUrl: 'http://localhost:9876'
     })
     
-    app.locals.foods = {
-      1490139646988: {'name': 'banana',
-                      'calories': '105'},
-      1490139561457: {'name': 'carrot',
-                      'calories': '25'}
-    };
   });
 
   after(() => {
@@ -35,8 +32,20 @@ describe('API', () => {
   });
 
   describe('GET /foods/:id', () => {
+    beforeEach((done) => {
+      database.raw(
+        'INSERT INTO foods (name, calories, created_at) VALUES (?, ?, ?)',
+        ["banana", 105, new Date]
+      ).then(() => done());
+    })
+
+    afterEach((done) => {
+      database.raw('TRUNCATE foods RESTART IDENTITY')
+      .then(() => done());
+    })
+    
     it('returns a successful status code if record found', (done) => {
-      this.request.get('/foods/1490139646988', (error, response) => {
+      this.request.get('/foods/1', (error, response) => {
         if (error) { done(error) };
         assert.equal(response.statusCode, 200);
         done();
@@ -52,18 +61,35 @@ describe('API', () => {
     });
 
     it('returns a particular food', (done) => {
-      this.request.get('/foods/1490139646988', (error, response) => {
+      this.request.get('/foods/1', (error, response) => {
         if (error) { done(error) };
-        var expectedFood = app.locals.foods['1490139646988']
-        var foundFood = JSON.parse(response.body)['food'];
-        assert.equal(foundFood.name, expectedFood.name);
-        assert.equal(foundFood.calories, expectedFood.calories);
-        done();
+        
+        const id = 1
+        const name = 'banana'
+        const calories = 105
+
+        let foundFood = JSON.parse(response.body)
+        assert.equal(foundFood.id, id)
+        assert.equal(foundFood.name, name)
+        assert.equal(foundFood.calories, calories)
+        done()
       });
     });
   });
 
   describe('GET /foods', () => {
+    beforeEach((done) => {
+      database.raw(
+        'INSERT INTO foods (name, calories, created_at) VALUES (?, ?, ?)',
+        ["banana", 105, new Date]
+      ).then(() => done());
+    })
+
+    afterEach((done) => {
+      database.raw('TRUNCATE foods RESTART IDENTITY')
+      .then(() => done());
+    })
+    
     it('returns a successful status code', (done) => {
       this.request.get('/foods', (error, response) => {
         if (error) { done(error) };
@@ -75,64 +101,76 @@ describe('API', () => {
     it('returns all foods avaiable', (done) => {
       this.request.get('/foods', (error, response) => {
         if (error) { done(error) };
-        var foods = JSON.parse(response.body);
-        assert.equal(foods.count, app.locals.foods.count);
+        
+        let foods = JSON.parse(response.body);
+        
+        assert.equal(foods.length, 1); 
         done();
       });
     });
   });
 
   describe('POST /foods', () => {
-    beforeEach(() => {
-      app.locals.foods = {};
-    });
+    afterEach((done) => {
+      database.raw('TRUNCATE foods RESTART IDENTITY')
+      .then(() => done());
+    })
     
     it('recieves and stores data', (done) => {
       var food = {'food': {'name': 'banana', 'calories': '105'}}
       this.request.post('/foods', { form: food }, (error, response) => {
         if (error) { done(error) };
-        var foodsCount = Object.keys(app.locals.foods).length;
-        assert.equal(foodsCount, 1);
+        var food = JSON.parse(response.body)
+        assert.equal(food.name, 'banana');
+        assert.equal(food.calories, '105');
         done();
       });
     });
   });
 
   describe('PATCH /foods/:id', () => {
-    beforeEach(() => {
-      app.locals.foods = {
-        1490139646988: {'name': 'banana',
-                        'calories': '105'},
-        1490139561457: {'name': 'carrot',
-                        'calories': '25'}
-      };
-    }); 
+    beforeEach((done) => {
+      database.raw(
+        'INSERT INTO foods (name, calories, created_at) VALUES (?, ?, ?)',
+        ["banana", 105, new Date]
+      ).then(() => done());
+    })
+    
+    afterEach((done) => {
+      database.raw('TRUNCATE foods RESTART IDENTITY')
+      .then(() => done());
+    })
     
     it('can update an exsisting record', (done) => {
       var food = {'food': {'name': 'apple', 'calories': '105'}}
-      this.request.patch('/foods/1490139646988', { form: food }, (error, response) => {
+      this.request.patch('/foods/1', { form: food }, (error, response) => {
         if (error) { done(error) } 
-        var food =  app.locals.foods[1490139646988];
+        var food = JSON.parse(response.body);
         assert.equal(food.name, 'apple');
+        assert.equal(food.calories, '105');
         done();
       });
     });  
   });
 
   describe('DELETE /foods/:id', () => {
-    beforeEach(() => {
-      app.locals.foods = {
-        1490139646988: {'name': 'banana',
-                        'calories': '105'},
-        1490139561457: {'name': 'carrot',
-                        'calories': '25'}
-      };
-    }); 
+    beforeEach((done) => {
+      database.raw(
+        'INSERT INTO foods (name, calories, created_at) VALUES (?, ?, ?)',
+        ["banana", 105, new Date]
+      ).then(() => done());
+    })
+    
+    afterEach((done) => {
+      database.raw('TRUNCATE foods RESTART IDENTITY')
+      .then(() => done());
+    })
     
     it('removes a specific record', (done) => {
-      this.request.delete('/foods/1490139561457', (error, response) => {
+      this.request.delete('/foods/1', (error, response) => {
         if (error) { done(error) }
-        assert.equal(Object.keys(app.locals.foods).length, 1);
+        
+        assert.equal(response.statusCode, 202)
         done();
       });
     });

@@ -4,6 +4,7 @@ const request = require('request');
 const environment = process.env.NODE_ENV || 'development';
 const configuration = require('../knexfile')[environment];
 const database = require('knex')(configuration);
+const Food = require('../lib/models/food.js');
 
 describe('API', () => {
   
@@ -33,15 +34,11 @@ describe('API', () => {
 
   describe('GET /foods/:id', () => {
     beforeEach((done) => {
-      database.raw(
-        'INSERT INTO foods (name, calories, created_at) VALUES (?, ?, ?)',
-        ["banana", 105, new Date]
-      ).then(() => done());
+        Food.create("banana", 105, new Date).then(() => done());
     })
 
     afterEach((done) => {
-      database.raw('TRUNCATE foods RESTART IDENTITY')
-      .then(() => done());
+      Food.clearFoods().then(() => done());
     })
     
     it('returns a successful status code if record found', (done) => {
@@ -79,15 +76,11 @@ describe('API', () => {
 
   describe('GET /foods', () => {
     beforeEach((done) => {
-      database.raw(
-        'INSERT INTO foods (name, calories, created_at) VALUES (?, ?, ?)',
-        ["banana", 105, new Date]
-      ).then(() => done());
+      Food.create("banana", 105, new Date).then(() => done());
     })
 
     afterEach((done) => {
-      database.raw('TRUNCATE foods RESTART IDENTITY')
-      .then(() => done());
+      Food.clearFoods().then(() => done());
     })
     
     it('returns a successful status code', (done) => {
@@ -112,8 +105,7 @@ describe('API', () => {
 
   describe('POST /foods', () => {
     afterEach((done) => {
-      database.raw('TRUNCATE foods RESTART IDENTITY')
-      .then(() => done());
+      Food.clearFoods().then(() => done());
     })
     
     it('recieves and stores data', (done) => {
@@ -130,15 +122,11 @@ describe('API', () => {
 
   describe('PATCH /foods/:id', () => {
     beforeEach((done) => {
-      database.raw(
-        'INSERT INTO foods (name, calories, created_at) VALUES (?, ?, ?)',
-        ["banana", 105, new Date]
-      ).then(() => done());
+      Food.create('banana', '105', new Date).then(() => done());
     })
     
     afterEach((done) => {
-      database.raw('TRUNCATE foods RESTART IDENTITY')
-      .then(() => done());
+      Food.clearFoods().then(() => done());
     })
     
     it('can update an exsisting record', (done) => {
@@ -155,15 +143,11 @@ describe('API', () => {
 
   describe('DELETE /foods/:id', () => {
     beforeEach((done) => {
-      database.raw(
-        'INSERT INTO foods (name, calories, created_at) VALUES (?, ?, ?)',
-        ["banana", 105, new Date]
-      ).then(() => done());
+      Food.create('banana', 105, new Date).then(() => done());
     })
     
     afterEach((done) => {
-      database.raw('TRUNCATE foods RESTART IDENTITY')
-      .then(() => done());
+      Food.clearFoods().then(() => done());
     })
     
     it('removes a specific record', (done) => {

@@ -1,9 +1,8 @@
 const express = require('express');
 const app = express();
 const bodyParser = require('body-parser')
-const environment = process.env.NODE_ENV || 'development';
-const configuration = require('./knexfile')[environment];
-const database = require('knex')(configuration);
+const Food = require('./lib/models/food.js');
+const FoodsController = require('./lib/controllers/foods-controller.js')
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -22,44 +21,23 @@ app.get('/', (request, response) => {
 })
 
 app.post('/foods', (request, response) => {
-  database.raw('INSERT INTO foods (name, calories, created_at) VALUES (?, ?, ?) RETURNING *', [request.body.food.name, request.body.food.calories, new Date])
-  .then((data) => {
-    response.status(201).json(data.rows[0]);
-  });
+  FoodsController.create(request, response)
 });
 
 app.get('/foods', (request, response) => {
-  database.raw('SELECT * FROM foods')
-  .then((data) => {
-    response.status(200).json(data.rows);
-  });
+  FoodsController.index(request, response)
 });
 
 app.get('/foods/:id', (request, response) => {
-  database.raw('SELECT * FROM foods WHERE id=?', [request.params.id])
-  .then((data) => {
-    if (!data.rowCount) {
-      response.sendStatus(404)
-    }
-    response.json(data.rows[0])
-  });
+  FoodsController.show(request, response)
 });
 
 app.patch('/foods/:id', (request, response) => {
-  database.raw('UPDATE foods SET name = ?, calories = ? WHERE id = ? RETURNING *', [request.body.food.name, request.body.food.calories, request.params.id])
-  .then((data) => {
-    if (!data.rowCount) {
-      response.sendStatus(404);
-    }
-    response.status(202).json(data.rows[0])
-  });
+  FoodsController.update(request, response)
 });
 
 app.delete('/foods/:id', (request, response) => {
-  database.raw('DELETE FROM foods WHERE id = ?', [request.params.id])
-  .then((data) => {
-    response.sendStatus(202);
-  })
+  FoodsController.destroy(request, response)
 });
 
 app.listen(app.get('port'), () => {
